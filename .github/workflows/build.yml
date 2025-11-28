@@ -50,3 +50,8 @@ jobs:
         with:
           app-name: loan-system-test-functionapp-catalogue
           package: ./publish
+
+      - name: Set Auth0 Configuration
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          az functionapp config appsettings set --name loan-system-test-functionapp-catalogue --resource-group loan-system-test-rg --settings "Auth0:Authority=${{ secrets.AUTH0_AUTHORITY }}" "Auth0:Audience=${{ secrets.AUTH0_AUDIENCE }}"

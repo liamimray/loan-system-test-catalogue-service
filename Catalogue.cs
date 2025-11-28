@@ -1,3 +1,6 @@
+using CatalogueService.Attributes;
+using CatalogueService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -11,16 +14,27 @@ namespace CatalogueService
 public class Catalogue
 {
     private readonly ILogger<Catalogue> _logger;
+    private readonly IPermissionService _permissionService;
 
-    public Catalogue(ILogger<Catalogue> logger)
+    public Catalogue(ILogger<Catalogue> logger, IPermissionService permissionService)
     {
         _logger = logger;
+        _permissionService = permissionService;
     }
 
     [Function("GetCatalogueItems")]
+    [Authorize]
+    [RequirePermission("read:catalogue")]
     public IActionResult GetCatalogueItems([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         _logger.LogInformation("C# HTTP trigger function processed a request.");
+
+        // Check permission using the service
+        if (!_permissionService.HasPermission(req.HttpContext.User, "read:catalogue"))
+        {
+            _logger.LogWarning("User does not have read:catalogue permission");
+            return new ObjectResult("Forbidden: Insufficient permissions") { StatusCode = 403 };
+        }
 
         // Create the list of catalogue items
         var catalogueItems = new List<CatalogueItem>

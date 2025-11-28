@@ -1,4 +1,4 @@
-name: Build
+name: Build and Deploy
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   build:
@@ -35,8 +36,15 @@ jobs:
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Azure Login
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: azure/login@v2
         with:
-          name: function-app
-          path: ./publish
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Functions
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: Azure/functions-action@v1
+        with:
+          app-name: loan-system-test-functionapp-catalogue
+          package: ./publish

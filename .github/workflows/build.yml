@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: main
   pull_request:
-    branches: [main]
+    branches: main
   workflow_dispatch:
 
 permissions:
@@ -31,3 +31,12 @@ jobs:
 
       - name: Test
         run: dotnet test --no-build --verbosity normal --configuration Release
+
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: function-app
+          path: ./publish
